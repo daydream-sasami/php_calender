@@ -1,5 +1,9 @@
 <?php
 
+function h($s) {
+  return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+}
+
 try {
   if (!isset($_GET['t']) || !preg_match('/\A\d{4}-\d{2}\z/', $_GET['t'])) {
     throw new Exception();
@@ -9,6 +13,10 @@ try {
   $thisMonth = new DateTime('first day of this month');
 }
 
+$dt = clone $thisMonth;
+$prev = $dt->modify('-1 month')->format('Y-m');
+$dt = clone $thisMonth;
+$next = $dt->modify('+1 month')->format('Y-m');
 $yearMonth = $thisMonth->format('F Y');
 
 $tail = '';
@@ -24,11 +32,13 @@ $period = new DatePeriod(
   new DateInterval('P1D'),
   new DateTime('first day of ' . $yearMonth . ' +1 month')
 );
+$today = new DateTime('today');
 foreach ($period as $day) {
   if($day->format('w') % 7 === 0) {
     $body .= '</tr><tr>';
   }
-  $body .= sprintf('<td class="youbi_%d">%d</td>', $day->format('w') % 7,$day->format('d'));
+  $todayClass = ($day->format('Y-m-d') === $today->format('Y-m-d')) ? 'today' : '';
+  $body .= sprintf('<td class="youbi_%d %s">%d</td>', $day->format('w') % 7, $todayClass, $day->format('d'));
 }
 
 $head = '';
@@ -53,9 +63,9 @@ $html = '<tr>' . $tail . $body . $head .'</tr>';
   <table>
     <thead>
       <tr>
-        <th><a href="">&laquo;</a></th>
-        <th colspan="5"><?php echo $yearMonth; ?></th>
-        <th><a href="">&raquo;</a></th>
+        <th><a href="/?t=<?php echo h($prev); ?>">&laquo;</a></th>
+        <th colspan="5"><?php echo h($yearMonth); ?></th>
+        <th><a href="/?t=<?php echo h($next); ?>">&raquo;</a></th>
       </tr>
     </thead>
     <tbody>
@@ -72,7 +82,7 @@ $html = '<tr>' . $tail . $body . $head .'</tr>';
     </tbody>
     <tfoot>
       <tr>
-        <th colspan="7"><a href="">Today</a></th>
+        <th colspan="7"><a href="/">Today</a></th>
       </tr>
     </tfoot>
   </table>
